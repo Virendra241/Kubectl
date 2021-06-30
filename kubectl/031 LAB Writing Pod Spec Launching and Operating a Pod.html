@@ -1,0 +1,104 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>031 LAB Writing Pod Spec Launching and Operating a Pod</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><h4><strong>Deploying Pods</strong></h4><p><br></p><p><strong>Life of a pod</strong></p><ul><li><p>Pending : in progress</p></li><li><p>Running</p></li><li><p>Succeeded : successfully exited</p></li><li><p>Failed</p></li><li><p>Unknown</p></li></ul><h4>Probes</h4><ul><li><p>livenessProbe : Containers are Alive</p></li><li><p>readinessProbe : Ready to Serve Traffic</p></li></ul><h4>Resource Configs</h4><p>Each entity created with kubernetes is a resource including pod, service, deployments, replication controller etc. Resources can be defined as YAML or JSON. Here is the syntax to create a YAML specification.</p><p><strong>AKMS</strong> =&gt; Resource Configs Specs</p><pre class="prettyprint linenums">apiVersion: v1
+kind:
+metadata:
+spec:
+</pre><p>Spec Schema: https://kubernetes.io/docs/user-guide/pods/multi-container/</p><p>To list supported version of apis</p><pre class="prettyprint linenums">kubectl api-versions
+</pre><h4><strong>Writing Pod Spec</strong></h4><p>Lets now create the Pod config by adding the kind and specs to schme given in the file vote-pod.yaml as follows.</p><p>Filename: k8s-code/pods/vote-pod.yaml</p><pre class="prettyprint linenums">apiVersion:
+kind: Pod
+metadata:
+spec:
+</pre><p>Lets edit this and add the pod specs</p><p>Filename: k8s-code/pods/vote-pod.yaml</p><pre class="prettyprint linenums">apiVersion: v1
+kind: Pod
+metadata:
+  name: vote
+  labels:
+    app: python
+    role: vote
+    version: v1
+spec:
+  containers:
+    - name: app
+      image: schoolofdevops/vote:v1
+      ports:
+        - containerPort: 80
+          protocol: TCP
+</pre><p><a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.9/#pod-v1-core" rel="noopener noreferrer" target="_blank">Use this link to refer to pod spec</a></p><h4>Launching and operating a Pod</h4><p>To launch a monitoring screen to see whats being launched, use the following command in a new terminal window where kubectl is configured.</p><pre class="prettyprint linenums">watch -n 1  kubectl get pods,deploy,rs,svc
+
+</pre><p>kubectl Syntax:</p><pre class="prettyprint linenums">kubectl
+kubectl apply --help
+kubectl apply -f FILE
+</pre><p><strong>To Launch pod using configs above,</strong></p><pre class="prettyprint linenums">kubectl apply -f vote-pod.yaml
+
+</pre><p>To view pods</p><pre class="prettyprint linenums">kubectl get pods
+
+kubectl get po -o wide
+
+kubectl get pods vote
+</pre><p><strong>To get detailed info</strong></p><pre class="prettyprint linenums">kubectl describe pods vote
+</pre><p><strong>[Output:]</strong></p><pre class="prettyprint linenums">Name:           vote
+Namespace:      default
+Node:           kube-3/192.168.0.80
+Start Time:     Tue, 07 Feb 2017 16:16:40 +0000
+Labels:         app=voting
+Status:         Running
+IP:             10.40.0.2
+Controllers:    &lt;none&gt;
+Containers:
+  vote:
+    Container ID:       docker://48304b35b9457d627b341e424228a725d05c2ed97cc9970bbff32a1b365d9a5d
+    Image:              schoolofdevops/vote:latest
+    Image ID:           docker-pullable://schoolofdevops/vote@sha256:3d89bfc1993d4630a58b831a6d44ef73d2be76a7862153e02e7a7c0cf2936731
+    Port:               80/TCP
+    State:              Running
+      Started:          Tue, 07 Feb 2017 16:16:52 +0000
+    Ready:              True
+    Restart Count:      0
+    Volume Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from default-token-2n6j1 (ro)
+    Environment Variables:      &lt;none&gt;
+Conditions:
+  Type          Status
+  Initialized   True
+  Ready         True
+  PodScheduled  True
+Volumes:
+  default-token-2n6j1:
+    Type:       Secret (a volume populated by a Secret)
+    SecretName: default-token-2n6j1
+QoS Class:      BestEffort
+Tolerations:    &lt;none&gt;
+Events:
+  FirstSeen     LastSeen        Count   From                    SubObjectPath           Type            Reason          Message
+  ---------     --------        -----   ----                    -------------           --------        ------          -------
+  21s           21s             1       {default-scheduler }                            Normal          Scheduled       Successfully assigned vote to kube-3
+  20s           20s             1       {kubelet kube-3}        spec.containers{vote}   Normal          Pulling         pulling image "schoolofdevops/vote:latest"
+  10s           10s             1       {kubelet kube-3}        spec.containers{vote}   Normal          Pulled          Successfully pulled image "schoolofdevops/vote:latest"
+  9s            9s              1       {kubelet kube-3}        spec.containers{vote}   Normal          Created         Created container with docker id 48304b35b945; Security:[seccomp=unconfined]
+  9s            9s              1       {kubelet kube-3}        spec.containers{vote}   Normal          Started         Started container with docker id 48304b35b945
+</pre><p><strong>Commands to operate the pod</strong></p><pre class="prettyprint linenums">kubectl logs vote
+
+kubectl exec -it vote  sh
+
+
+</pre><p><strong>Inside the container in a pod</strong></p><pre class="prettyprint linenums">ifconfig
+cat /etc/issue
+hostname
+cat /proc/cpuinfo
+ps aux
+</pre><h4></h4><h4><strong>Port Forwarding</strong></h4><p>This works if you have setup <strong>kubectl</strong> on a local laptop.</p><pre class="prettyprint linenums">kubectl port-forward --help
+kubectl port-forward vote 8000:80</pre></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>

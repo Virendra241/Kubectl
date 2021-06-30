@@ -1,0 +1,66 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>049 LAB Creating a Service and exposing it with NodePort</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><p>Exposing Application with a Service</p><p>Types of Services:</p><ul><li><p>ClusterIP</p></li><li><p>NodePort</p></li><li><p>LoadBalancer</p></li><li><p>ExternalName</p></li></ul><p><img alt="kubernetes service" src="https://github.com/schoolofdevops/ultimate-kubernetes-bootcamp/blob/master/images/k8s_service.jpg?raw=true"></p><pre class="prettyprint linenums">kubectl get pods
+kubectl get svc
+</pre><p>Sample Output:</p><pre class="prettyprint linenums">NAME                READY     STATUS    RESTARTS   AGE
+voting-appp-j52x   1/1       Running   0          2m
+voting-appp-pr2xz   1/1       Running   0          m
+voting-appp-qpxbm   1/1       Running   0          5m
+</pre><h4><strong>Setting up monitoring</strong></h4><p>If you are not running a monitoring screen, start it in a new terminal with the following command.</p><pre class="prettyprint linenums">watch -n 1 kubectl get  pod,deploy,rs,svc
+</pre><h4><strong>Writing Service Spec</strong></h4><p>Lets start writing the meta information for service.</p><p>Filename: vote-svc.yaml</p><pre class="prettyprint linenums">---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vote
+  labels:
+    role: vote
+spec:
+</pre><p>And then add the spec to it. Refer to Service (v1 core) api at this page https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.10/</p><pre class="prettyprint linenums">---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vote
+  labels:
+    role: vote
+spec:
+  selector:
+    role: vote
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30000
+  type: NodePort
+
+</pre><p>Save the file.</p><p>Now to create a service:</p><pre class="prettyprint linenums">kubectl apply -f vote-svc.yaml --dry-run
+kubectl apply -f vote-svc.yaml
+kubectl get svc
+</pre><p>Now to check which port the pod is connected</p><pre class="prettyprint linenums">kubectl describe service vote
+</pre><p><strong>Check for the Nodeport here</strong></p><p>Sample Output</p><pre class="prettyprint linenums">Name:                     vote
+Namespace:                instavote
+Labels:                   role=svc
+                          tier=front
+Annotations:              kubectl.kubernetes.io/last-applied-configuration={"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"role":"svc","tier":"front"},"name":"vote","namespace":"instavote"},"spec":{...
+Selector:                 app=vote
+Type:                     NodePort
+IP:                       10.108.108.157
+Port:                     &lt;unset&gt;  80/TCP
+TargetPort:               80/TCP
+NodePort:                 &lt;unset&gt;  31429/TCP
+Endpoints:                10.38.0.4:80,10.38.0.5:80,10.38.0.6:80 + 2 more...
+Session Affinity:         None
+External Traffic Policy:  Cluster
+Events:                   &lt;none&gt;
+</pre><p>Go to browser and check hostip:NodePort</p><p>Here the node port is 31429.</p><p>Sample output will be:</p><p><img alt="Vote" src="https://schoolofdevops.github.io/ultimate-kubernetes-bootcamp/images/vote-rc.png"></p></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>

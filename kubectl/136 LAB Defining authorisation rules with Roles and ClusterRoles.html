@@ -1,0 +1,52 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>136 LAB Defining authorisation rules with Roles and ClusterRoles</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><h4><strong>Define authorisation rules with Roles and ClusterRoles</strong></h4><p>Whats the difference between Roles and ClusterRoles ??</p><ul><li><p>Role is limited to a namespace (Projects/Orgs/Env)</p></li><li><p>ClusterRole is Global</p></li></ul><p>Lets say you want to provide read only access to <strong>instavote</strong>, a project specific namespace to all users in the <strong>example.org</strong></p><p><code>file: interns-role.yaml</code></p><pre class="prettyprint linenums">apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: Role
+metadata:
+  namespace: instavote
+  name: interns
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["get", "list", "watch"]
+</pre><p>In order to map it to all users in <strong>example.org</strong>, create a RoleBinding as</p><p><code>interns-rolebinding.yml</code></p><pre class="prettyprint linenums">kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: interns
+  namespace: instavote
+subjects:
+- kind: Group
+  name: interns
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: interns
+  apiGroup: rbac.authorization.k8s.io
+</pre><pre class="prettyprint linenums">kubectl create -f interns-role.yml
+
+kubectl create -f interns-rolebinding.yml
+</pre><p>To gt information about the objects created above,</p><pre class="prettyprint linenums">kubectl get roles -n instavote
+kubectl get roles,rolebindings -n instavote
+
+kubectl describe role interns
+kubectl describe rolebinding interns
+
+</pre><p>To validate the access,</p><pre class="prettyprint linenums">kubectl config use-context yono-prod
+kubectl get pods
+
+</pre><p><strong>To switch back to admin,</strong></p><pre class="prettyprint linenums">kubectl config use-context admin-prod
+
+</pre><h4><strong>Exercise</strong></h4><p>Create a Role and Rolebinding for <strong>dev</strong> group with the authorizations defined in the table above. Once applied, test it</p></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>

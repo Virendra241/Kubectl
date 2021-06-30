@@ -1,0 +1,36 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>095 LAB Defining Resource Requests and Limits</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><p>Defining Resource Requests and Limits</p><p><code>file: vote-deploy.yaml</code></p><pre class="prettyprint linenums">....
+spec:
+containers:
+- name: app
+  image: schoolofdevops/vote:v4
+  ports:
+    - containerPort: 80
+      protocol: TCP
+  envFrom:
+  - configMapRef:
+      name: vote
+  resources:
+    limits:
+      cpu: "200m"
+      memory: "250Mi"
+    requests:
+      cpu: "100m"
+      memory: "50Mi"
+
+</pre><p>And apply</p><pre class="prettyprint linenums">kubectl apply -f vote-deploy.yaml
+</pre><p><strong>Exercise:</strong></p><ul><li><p>Define the value of <strong>cpu.request</strong> &gt; <strong>cpu.limit</strong> Try to apply and observe.</p></li><li><p>Define the values for <strong>memory.request</strong> and <strong>memory.limit</strong> higher than the total system memory. Apply and observe the deployment and pods.</p><p><br></p></li></ul></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>

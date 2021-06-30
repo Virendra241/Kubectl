@@ -1,0 +1,30 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>019 LAB Option 2 Provisioning 3  nodes for Kubernetes with Vagrant and VirtualBox</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><p>Install VirtualBox and Vagrant</p><p><br></p><ul><li><p><strong>VirtualBox</strong>: https://www.virtualbox.org/wiki/Downloads</p></li><li><p><strong>Vagrant</strong>:  https://www.vagrantup.com/downloads.html</p></li></ul><p><br></p><h4>Provisioning Vagrant Nodes</h4><p><br></p><p>Clone repo if not already</p><pre class="prettyprint linenums">git clone https://github.com/schoolofdevops/lab-setup.git
+
+
+</pre><p>Launch environments with Vagrant</p><pre class="prettyprint linenums">cd lab-setup/kubernetes/vagrant-kube-cluster
+
+vagrant up
+
+</pre><p>Login to nodes</p><p>Open three different terminals to login to 3 nodes created with above command</p><p><strong>Terminal 1</strong></p><pre class="prettyprint linenums">vagrant ssh kube-01
+sudo su
+
+</pre><p><strong>Terminal 2</strong></p><pre class="prettyprint linenums">vagrant ssh kube-02
+sudo su
+</pre><p><strong>Terminal 3</strong></p><pre class="prettyprint linenums">vagrant ssh kube-03
+sudo su
+</pre><p><strong>Once the environment is setup, follow Initialization of Master </strong>onwards from the following tutorial https://github.com/schoolofdevops/kubernetes-fundamentals/blob/master/tutorials/1.%20install_kubernetes.md</p></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>

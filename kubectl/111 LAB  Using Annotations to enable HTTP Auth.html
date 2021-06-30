@@ -1,0 +1,61 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>111 LAB  Using Annotations to enable HTTP Auth</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><p>Adding HTTP Authentication with Annotations</p><h4>Creating htpasswd spec as Secret</h4><pre class="prettyprint linenums">htpasswd -c auth devops
+</pre><p>Or use <a href="http://www.htaccesstools.com/htpasswd-generator/" rel="noopener noreferrer" target="_blank">Online htpasswd generator</a> to generate a htpasswd spec. if you use the online generator, copy the contents to a file by name <code>auth</code> in the current directory.</p><p>Then generate the secret as,</p><pre class="prettyprint linenums">kubectl create secret generic mysecret --from-file auth
+
+kubectl get secret
+
+kubectl describe secret mysecret
+</pre><p>And then add annotations to the ingress object so that it is read by the ingress controller to update configurations.</p><p><code>file: vote-ing.yaml</code></p><pre class="prettyprint linenums">apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: vote
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    ingress.kubernetes.io/auth-type: "basic"
+    ingress.kubernetes.io/auth-secret: "mysecret"
+spec:
+  rules:
+    - host: vote.example.org
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: vote
+              servicePort: 82
+    - host: results.example.org
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: results
+              servicePort: 81
+
+</pre><p>where,</p><ul><li><p><em>ingress.kubernetes.io/auth-type: "basic"</em> defines authentication type that needs to be added.</p></li><li><p><em>ingress.kubernetes.io/auth-secret: "mysecret"</em> refers to the secret created earlier.</p></li></ul><p>apply</p><pre class="prettyprint linenums">kubectl apply -f vote-ing.yaml
+kubectl get ing/vote -o yaml
+</pre><p>Observe the annotations field. No sooner than you apply this spec, ingress controller reads the event and a basic http authentication is set with the secret you added.</p><pre class="prettyprint linenums">                      +----------+
+       +--update----&gt; | traefik  |
+       |              |  configs |
+       |              +----------+
+  +----+----+--+            ^
+  | ingress    |            :
+  | controller |            :
+  +----+-------+            :
+       |              +-----+-------+
+       +---watch----&gt; | ingress     | &lt;------- user
+                      | annotations |
+                      +-------------+
+</pre><p>And if you visit traefik's dashboard and go to the details tab, you should see the basic authentication section enabled as in the diagram below.</p><p><img alt="Name Based Routing" src="http://127.0.0.1:8000/images/domain-name.png"></p><h4><strong>Reading</strong></h4><ul><li><p><a href="https://docs.traefik.io/user-guide/kubernetes/" rel="noopener noreferrer" target="_blank">Trafeik's Guide to Kubernetes Ingress Controller</a></p></li><li><p><a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/" rel="noopener noreferrer" target="_blank">Annotations</a></p></li><li><p><a href="https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/" rel="noopener noreferrer" target="_blank">DaemonSets</a></p></li></ul><p><strong>References</strong></p><ul><li><p><a href="http://www.htaccesstools.com/htpasswd-generator/" rel="noopener noreferrer" target="_blank">Online htpasswd generator</a></p></li></ul><p><br></p></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>

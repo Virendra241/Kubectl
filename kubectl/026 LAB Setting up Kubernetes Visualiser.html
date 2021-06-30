@@ -1,0 +1,35 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>026 LAB Setting up Kubernetes Visualiser</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><h4><strong>Kubernetes Visualizer</strong></h4><p>In this chapter we will see how to set up kubernetes visualizer that will show us the changes in our cluster in real time.</p><h4>Set up</h4><p>Fork the repository and deploy the visualizer on kubernetes</p><pre class="prettyprint linenums">git clone  https://github.com/schoolofdevops/kube-ops-view
+kubectl apply -f kube-ops-view/deploy/
+
+</pre><p>[Sample Output]</p><pre class="prettyprint linenums">serviceaccount "kube-ops-view" created
+clusterrole "kube-ops-view" created
+clusterrolebinding "kube-ops-view" created
+deployment "kube-ops-view" created
+ingress "kube-ops-view" created
+deployment "kube-ops-view-redis" created
+service "kube-ops-view-redis" created
+service "kube-ops-view" created
+</pre><p><strong>Get the nodeport for the service.</strong></p><pre class="prettyprint linenums">kubectl get svc
+
+[output]
+NAME                  TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+kube-ops-view         NodePort    10.107.204.74   &lt;none&gt;        80:**30073**/TCP   1m
+kube-ops-view-redis   ClusterIP   10.104.50.176   &lt;none&gt;        6379/TCP       1m
+kubernetes            ClusterIP   10.96.0.1       &lt;none&gt;        443/TCP        8m
+</pre><p><strong>In my case, port 30073 </strong>is the nodeport.</p><p>Visit the port from the browser. You could add /#scale=2.0 or similar option where 2.0 = 200% the scale.</p><pre class="prettyprint linenums">http://&lt;NODE_IP:NODE_PORT&gt;/#scale=2.0
+</pre><p><img alt="kube-visualizer" src="https://schoolofdevops.github.io/ultimate-kubernetes-bootcamp/images/kube-visualizer.png"></p></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>

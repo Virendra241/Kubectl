@@ -1,0 +1,60 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>043 LAB Writing Replica Set Specs</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><h4><strong>Writing ReplicaSet Specs</strong></h4><p><br></p><p>To understand how ReplicaSets works with the selectors lets launch a pod in the new namespace with existing specs.</p><pre class="prettyprint linenums">cd k8s-code/pods
+kubectl apply -f vote-pod.yaml
+
+kubectl get pods
+cd ../projects/instavote/dev/
+</pre><p>Lets now write the spec for the Rplica Set. This is going to mainly contain,</p><ul><li><p>replicas</p></li><li><p>selector</p></li><li><p>template (pod spec )</p></li><li><p>minReadySeconds</p></li></ul><p><em>file: vote-rs.yaml</em></p><pre class="prettyprint linenums">apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: vote
+spec:
+  replicas: 5
+  minReadySeconds: 20
+  selector:
+    matchLabels:
+      role: vote
+    matchExpressions:
+      - {key: version, operator: In, values: [v1, v2, v3]}
+  template:
+</pre><p><strong>Lets now add the metadata and spec from pod spec defined in vote-pod.yaml. And with that, the Replica Set Spec changes to</strong></p><p><em>file: vote-rs.yaml</em></p><pre class="prettyprint linenums">apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: vote
+spec:
+  replicas: 5
+  minReadySeconds: 20
+  selector:
+    matchLabels:
+      role: vote
+    matchExpressions:
+      - {key: version, operator: In, values: [v1, v2, v3]}
+  template:
+    metadata:
+      name: vote
+      labels:
+        app: python
+        role: vote
+        version: v1
+    spec:
+      containers:
+        - name: app
+          image: schoolofdevops/vote:v1
+          ports:
+            - containerPort: 80
+              protocol: TCP
+</pre><p><br></p></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>

@@ -1,0 +1,98 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>143 LAB Defining affinity between applications with PodAffinity</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><h4><strong>Pod Affinity</strong></h4><p>Lets define pod affinity criteria as,</p><ul><li><p>Pods for <strong>vote</strong> and <strong>redis</strong> should be co located as much as possible (preferred)</p></li><li><p>No two pods with <strong>redis</strong> app should be running on the same node (required)</p></li></ul><pre class="prettyprint linenums">kubectl get pods -o wide --selector="role in (vote,redis)"
+
+</pre><p>[sample output]</p><pre class="prettyprint linenums">NAME                     READY     STATUS    RESTARTS   AGE       IP               NODE
+redis-6555998885-4k5cr   1/1       Running   0          4h        10.233.71.19     node3
+redis-6555998885-fb8rk   1/1       Running   0          4h        10.233.102.132   node1
+vote-74c894d6f5-bql8z    1/1       Running   0          22m       10.233.74.78     node4
+vote-74c894d6f5-nnzmc    1/1       Running   0          21m       10.233.71.22     node3
+vote-74c894d6f5-ss929    1/1       Running   0          22m       10.233.74.77     node4
+vote-74c894d6f5-tpzgm    1/1       Running   0          22m       10.233.71.21     node3
+</pre><p><code><strong>file: vote-deploy.yaml</strong></code></p><pre class="prettyprint linenums">...
+    template:
+...
+    spec:
+      containers:
+        - name: app
+          image: schoolofdevops/vote:v1
+          ports:
+            - containerPort: 80
+              protocol: TCP
+
+      affinity:
+...
+
+        podAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                  - key: role
+                    operator: In
+                    values:
+                    - redis
+                topologyKey: kubernetes.io/hostname
+</pre><p><code>file: redis-deploy.yaml</code></p><pre class="prettyprint linenums">....
+  template:
+...
+    spec:
+      containers:
+      - image: schoolofdevops/redis:latest
+        imagePullPolicy: Always
+        name: redis
+        ports:
+        - containerPort: 6379
+          protocol: TCP
+      restartPolicy: Always
+
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: role
+                operator: In
+                values:
+                - redis
+            topologyKey: "kubernetes.io/hostname"
+</pre><p><strong>apply</strong></p><pre class="prettyprint linenums">kubectl apply -f redis-deploy.yaml
+kubectl apply -f vote-deploy.yaml
+
+</pre><p>check the pods distribution</p><pre class="prettyprint linenums">kubectl get pods -o wide --selector="role in (vote,redis)"
+</pre><p><strong>[sample output ]</strong></p><pre class="prettyprint linenums">NAME                     READY     STATUS    RESTARTS   AGE       IP             NODE
+redis-5bf748dbcf-gr8zg   1/1       Running   0          13m       10.233.75.14   node2
+redis-5bf748dbcf-vxppx   1/1       Running   0          13m       10.233.74.79   node4
+vote-56bf599b9c-22lpw    1/1       Running   0          12m       10.233.74.80   node4
+vote-56bf599b9c-nvvfd    1/1       Running   0          13m       10.233.71.25   node3
+vote-56bf599b9c-w6jc9    1/1       Running   0          13m       10.233.71.23   node3
+vote-56bf599b9c-ztdgm    1/1       Running   0          13m       10.233.71.24   node3
+</pre><p><strong>Observations from the above output,</strong></p><ul><li><p>Since redis has a hard constraint not to be on the same node, you would observe redis pods being on differnt nodes (node2 and node4)</p></li><li><p>since vote app has a soft constraint, you see some of the pods running on node4 (same node running redis), others continue to run on node 3</p></li></ul><p>If you kill the pods on node3, at the time of scheduling new ones, scheduler meets all affinity rules</p><pre class="prettyprint linenums">$ kubectl delete pods vote-56bf599b9c-nvvfd vote-56bf599b9c-w6jc9 vote-56bf599b9c-ztdgm
+pod "vote-56bf599b9c-nvvfd" deleted
+pod "vote-56bf599b9c-w6jc9" deleted
+pod "vote-56bf599b9c-ztdgm" deleted
+
+
+$ kubectl get pods -o wide --selector="role in (vote,redis)"
+NAME                     READY     STATUS    RESTARTS   AGE       IP             NODE
+redis-5bf748dbcf-gr8zg   1/1       Running   0          19m       10.233.75.14   node2
+redis-5bf748dbcf-vxppx   1/1       Running   0          19m       10.233.74.79   node4
+vote-56bf599b9c-22lpw    1/1       Running   0          19m       10.233.74.80   node4
+vote-56bf599b9c-4l6bc    1/1       Running   0          20s       10.233.74.83   node4
+vote-56bf599b9c-bqsrq    1/1       Running   0          20s       10.233.74.82   node4
+vote-56bf599b9c-xw7zc    1/1       Running   0          19s       10.233.74.81   node4
+</pre><p><br></p></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>

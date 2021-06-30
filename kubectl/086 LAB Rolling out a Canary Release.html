@@ -1,0 +1,61 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>086 LAB Rolling out a Canary Release</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><h4><strong>Canary Releases</strong></h4><pre class="prettyprint linenums">cd k8s-code/projets/instavote/dev
+mkdir canary
+cp vote-deploy.yaml canary/vote-canary-deploy.yaml
+
+</pre><p>change the following fields in <em>vote-canary-deploy.yaml</em></p><ul><li><p>metadata.name: vote-canary</p></li><li><p>spec.replicas: 3</p></li><li><p>spec.selector.matchExpressions: - {key: version, operator: In, values: [v1, v2, v3, v4]}</p></li><li><p>template.metadata.labels.version: v4</p></li><li><p>template.spec.containers.image: schoolofdevops/vote:v4</p></li></ul><p>File: canary/frontend-canary-deploy.yml</p><pre class="prettyprint linenums">apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vote-canary
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 2
+      maxUnavailable: 1
+  revisionHistoryLimit: 4
+  paused: false
+  replicas: 3
+  selector:
+    matchLabels:
+      role: vote
+    matchExpressions:
+      - {key: version, operator: In, values: [v1, v2, v3, v4, v5]}
+  minReadySeconds: 40
+  template:
+    metadata:
+      name: vote
+      labels:
+        app: python
+        role: vote
+        version: v4
+    spec:
+      containers:
+        - name: app
+          image: schoolofdevops/vote:v4
+          ports:
+            - containerPort: 80
+              protocol: TCP
+</pre><p>Before creating this deployment, find out how many endpoints the service has,</p><pre class="prettyprint linenums">kubectl describe service/vote
+</pre><p>[sample output ]</p><pre class="prettyprint linenums">Endpoints:                10.32.0.10:80,10.32.0.11:80,10.32.0.4:80 + 12 more...
+</pre><p>In this example current endpoints are <strong>15</strong></p><p>Now create the deployment for canary release</p><pre class="prettyprint linenums">kubectl apply -f canary/frontend-canary-deploy.yml
+
+</pre><p>And validate,</p><pre class="prettyprint linenums">kubectl get rs,deploy,svc
+
+kubectl describe service/vote
+</pre><p><strong>When you describe vote service, observe the number of endpoints</strong></p><p>[sample output]</p><pre class="prettyprint linenums">Endpoints:                10.32.0.10:80,10.32.0.11:80,10.32.0.16:80 + 15 more...
+</pre><p>Now its <strong>18</strong>, which is 3 more than the previous number. Those are the pods created by the canary deployment. And the above output proves that its actually sending traffic to both versions.</p><h4><strong>Delete Canary</strong></h4><p>Once validated, you could clean up canary release using</p><pre class="prettyprint linenums">kubectl delete -f canary/vote-canary-deploy.yaml</pre></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>

@@ -1,0 +1,58 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>059 Lab  Scale Rollout and Rollback</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><h4><strong>Scaling a deployment</strong></h4><p>To scale a deployment in Kubernetes:</p><pre class="prettyprint linenums">kubectl scale deployment/vote --replicas=12
+
+kubectl rollout status deployment/vote
+
+</pre><p>Sample output:</p><pre class="prettyprint linenums">Waiting for rollout to finish: 5 of 12 updated replicas are available...
+Waiting for rollout to finish: 6 of 12 updated replicas are available...
+deployment "vote" successfully rolled out
+</pre><p><strong>You could also update the deployment by editing it.</strong></p><pre class="prettyprint linenums">kubectl edit deploy/vote
+</pre><p><strong>[change replicas to 15 from the editor, save and observe]</strong></p><h4><strong>Rolling Updates in Action</strong></h4><p>Now, update the deployment spec to apply</p><p>file: vote-deploy.yaml</p><pre class="prettyprint linenums">spec:
+...
+  replicas: 15
+...
+labels:
+   app: python
+   role: vote
+   version: v3
+...
+template:   
+  spec:
+    containers:
+      - name: app
+        image: schoolofdevops/vote:v3
+
+</pre><p>apply</p><pre class="prettyprint linenums">kubectl apply -f vote-deploy.yaml
+
+kubectl rollout status deployment/vote
+</pre><p>Observe rollout status and monitoring screen.</p><pre class="prettyprint linenums">kubectl rollout history deploy/vote
+
+kubectl rollout history deploy/vote --revision=1
+
+</pre><h4><strong>Undo and Rollback</strong></h4><p>file: vote-deploy.yaml</p><pre class="prettyprint linenums">spec:
+  containers:
+    - name: app
+      image: schoolofdevops/vote:rgjerdf
+
+</pre><p>apply</p><pre class="prettyprint linenums">kubectl apply -f vote-deploy.yaml
+
+kubectl rollout status
+
+kubectl rollout history deploy/vote
+
+kubectl rollout history deploy/vote --revision=xx
+</pre><p>where replace xxx with revisions</p><p>Find out the previous revision with sane configs.</p><p>To undo to a sane version (for example revision 3)</p><pre class="prettyprint linenums">kubectl rollout undo deploy/vote --to-revision=3</pre></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>

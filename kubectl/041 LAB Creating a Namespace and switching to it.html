@@ -1,0 +1,40 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>041 LAB Creating a Namespace and switching to it</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><h4><strong>Setting up a Namespace</strong></h4><p>Check current config</p><pre class="prettyprint linenums">kubectl config view
+kubectl config get-contexts
+</pre><p><strong>You could also examine the current configs in file cat ~/.kube/config</strong></p><h4><strong>Creating a namespace</strong></h4><p>Namespaces offers separation of resources running on the same physical infrastructure into virtual clusters. It is typically useful in mid to large scale environments with multiple projects, teams and need separate scopes. It could also be useful to map to your workflow stages e.g. dev, stage, prod.</p><p>Lets create a namespace called <strong>instavote</strong></p><pre class="prettyprint linenums">cd projects/instavote
+cat instavote-ns.yaml
+</pre><p><strong>[output]</strong></p><pre class="prettyprint linenums">kind: Namespace
+apiVersion: v1
+metadata:
+  name: instavote
+</pre><p>Lets create a namespace</p><pre class="prettyprint linenums">kubectl get ns
+kubectl apply -f instavote-ns.yaml
+
+kubectl get ns
+</pre><p><strong>And switch to it</strong></p><pre class="prettyprint linenums">kubectl config --help
+
+kubectl config get-contexts
+
+kubectl config current-context
+
+kubectl config set-context $(kubectl config current-context) --namespace=instavote
+
+kubectl config view
+
+kubectl config get-contexts
+
+</pre><p><strong>Exercise: Go back to the monitoring screen and observe what happens after switching the namespace.</strong></p></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>

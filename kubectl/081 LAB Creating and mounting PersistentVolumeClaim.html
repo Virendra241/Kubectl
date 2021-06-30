@@ -1,0 +1,63 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>081 LAB Creating and mounting PersistentVolumeClaim</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><h4><strong>Creating a Persistent Volume Claim</strong></h4><p>switch to project directory</p><pre class="prettyprint linenums">cd k8s-code/projects/instavote/dev/
+</pre><p>file: db-pvc.yaml</p><pre class="prettyprint linenums">kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: db-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: nfs
+
+</pre><p>And lets create the Persistent Volume Claim</p><pre class="prettyprint linenums">kubectl get pvc,storageclass
+
+kubectl logs -f nfs-provisioner-0
+
+kubectl apply -f db-pvc.yaml
+
+kubectl get pvc,storageclass
+
+kubectl describe pvc db-pvc
+</pre><p>file: db-deploy.yaml</p><pre class="prettyprint linenums">...
+spec:
+   containers:
+   - image: postgres:9.4
+     imagePullPolicy: Always
+     name: db
+     ports:
+     - containerPort: 5432
+       protocol: TCP
+     #mount db-vol to postgres data path
+     volumeMounts:
+     - name: db-vol
+       mountPath: /var/lib/postgresql/data
+   #create a volume with pvc
+   volumes:
+   - name: db-vol
+     persistentVolumeClaim:
+       claimName: db-pvc
+</pre><p>Observe which host <strong>db</strong> pod is running on</p><pre class="prettyprint linenums">kubectl get pod -o wide --selector='role=db'
+
+</pre><p><strong>And apply this code as</strong></p><pre class="prettyprint linenums">kubectl apply -f db-deploy.yaml
+
+kubectl get pod -o wide --selector='role=db'
+
+</pre><ul><li><p>Observe the volume and its content created on the nfs server</p></li><li><p>Observe which host the pod for <em>db</em> was created this time. Analyse the behavior of a deployment controller.</p></li></ul><p>Next <a href="https://schoolofdevops.github.io/ultimate-kubernetes-bootcamp/9-vote-configmaps_and_secrets/" rel="noopener noreferrer" target="_blank" title="Managing Configurations and Secrets"> </a>Previous</p><p><br></p></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>

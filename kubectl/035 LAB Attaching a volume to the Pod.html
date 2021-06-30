@@ -1,0 +1,43 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>035 LAB Attaching a volume to the Pod</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><h4><strong>Attach a Volume to the Pod</strong></h4><p>Lets create a pod for database and attach a volume to it. To achieve this we will need to</p><ul><li><p>create a <strong>volumes</strong> definition</p></li><li><p>attach volume to container using <strong>VolumeMounts</strong> property</p></li></ul><p>Local host volumes are of two types:<br>* emptyDir<br>* hostPath</p><p>We will pick hostPath. <a href="https://kubernetes.io/docs/concepts/storage/volumes/#hostpath" rel="noopener noreferrer" target="_blank">Refer to this doc to read more about hostPath.</a></p><p>File: db-pod.yaml</p><pre class="prettyprint linenums">apiVersion: v1
+kind: Pod
+metadata:
+  name: db
+  labels:
+    app: postgres
+    role: database
+    tier: back
+spec:
+  containers:
+    - name: db
+      image: postgres:9.4
+      ports:
+        - containerPort: 5432
+      volumeMounts:
+      - name: db-data
+        mountPath: /var/lib/postgresql/data
+  volumes:
+  - name: db-data
+    hostPath:
+      path: /var/lib/pgdata
+      type: DirectoryOrCreate
+</pre><p>To create this pod,</p><pre class="prettyprint linenums">kubectl apply -f db-pod.yaml
+
+kubectl describe pod db
+
+kubectl get events
+</pre><p><strong>Exercise</strong> : Examine <strong>/var/lib/pgdata</strong> on the systems to check if the directory is been created and if the data is present.</p><p><br></p></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>

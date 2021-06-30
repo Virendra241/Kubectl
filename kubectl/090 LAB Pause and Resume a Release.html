@@ -1,0 +1,42 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>090 LAB Pause and Resume a Release</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><h4><strong>Pause/Unpause</strong></h4><p><br></p><p>When you are in the middle of a new update for your application and you found out that the application is behaving as intended. In those situations, 1. we can pause the update, 2. fix the issue, 3. resume the update.</p><p>Let us change the image tag to V4 in pod spec.</p><p><code>File: vote-deploy.yaml</code></p><pre class="prettyprint linenums">    spec:
+       containers:
+         - name: app
+           image: schoolofdevops/vote:V4
+           ports:
+             - containerPort: 80
+               protocol: TCP
+</pre><p>Apply the changes.</p><pre class="prettyprint linenums">kubectl apply -f vote-deploy.yaml
+
+kubectl get pods
+
+[Output]
+NAME                         READY     STATUS         RESTARTS   AGE
+vote-c4f7b49d8-g5dgc   1/1       Running        0          6m
+vote-65554cc7-xsbhs    0/1       ErrImagePull   0          s
+</pre><p>Our deployment is failing. From some debugging, we can conclude that we are using a wrong image tag.</p><p>Now pause the update</p><pre class="prettyprint linenums">kubectl rollout pause deploy/vote
+</pre><p><strong>Set the deployment to use v4 </strong>version of the image.</p><p>Now resume the update</p><pre class="prettyprint linenums">kubectl rollout resume deployment vote
+kubectl rollout status deployment vote
+
+[Ouput]
+deployment "vote" successfully rolled out
+</pre><p><strong>and validate</strong></p><pre class="prettyprint linenums">kubectl get pods,rs,deploy
+
+[Output]
+NAME                         READY     STATUS    RESTARTS   AGE
+vote-875c8df8f-k4hls   1/1       Running   0          m
+</pre><p><strong>When you do this, you skip the need of creating a new rolling update altogether.</strong></p></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>

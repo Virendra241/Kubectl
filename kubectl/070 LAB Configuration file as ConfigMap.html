@@ -1,0 +1,45 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>070 LAB Configuration file as ConfigMap</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><h4><strong>Configuration file as ConfigMap</strong></h4><p><br></p><p>In the topic above we have seen how to use configmap as environment variables. Now let us see how to use configmap as redis configuration file.</p><p>Syntax for consuming file as a configmap is as follows</p><pre class="prettyprint linenums">  kubectl create configmap --from-file &lt;CONF-FILE-PATH&gt; &lt;NAME-OF-CONFIGMAP&gt;
+</pre><p>We have redis configuration as a file named <code>projects/instavote/config/redis.conf</code>. We are going to convert this file into a configmap</p><pre class="prettyprint linenums">cd k8s-code/projects/instavote/config/
+
+kubectl create configmap --from-file  redis.conf redis
+</pre><p><strong>Now validate the configs</strong></p><pre class="prettyprint linenums">kubectl get cm
+
+kubectl describe cm redis
+</pre><p><strong>To use this confif file, update your redis-deploy.yaml file to use it by mounting it as a volume.</strong></p><p>File: <code>dev/redis-deploy.yaml</code></p><pre class="prettyprint linenums">    spec:
+      containers:
+      - image: schoolofdevops/redis:latest
+        imagePullPolicy: Always
+        name: redis
+        ports:
+        - containerPort: 6379
+          protocol: TCP
+        volumeMounts:
+          - name: redis
+            subPath: redis.conf
+            mountPath: /etc/redis.conf
+      volumes:
+      - name: redis
+        configMap:
+          name: redis
+      restartPolicy: Always
+</pre><p>And apply it</p><pre class="prettyprint linenums">kubectl apply -f redis-deploy.yaml
+
+kubectl apply -f redis-svc.yaml
+
+kubectl get rs,deploy --show-labels
+</pre><p><strong>Exercise:</strong> Connect to redis pod and verify configs.</p></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>

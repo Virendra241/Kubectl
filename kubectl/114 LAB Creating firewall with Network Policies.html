@@ -1,0 +1,164 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>114 LAB Creating firewall with Network Policies</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><h4><strong>Setting up a firewall with Network Policies</strong></h4><p>While setting up the network policy, you may need to refer to the namespace created earlier. In order to being abel to referred to, namespace should have a label. Lets update the namespace with a label.</p><p><code>file: instavote-ns.yaml</code></p><pre class="prettyprint linenums">kind: Namespace
+apiVersion: v1
+metadata:
+  name: instavote
+  labels:
+    project: instavote
+
+</pre><p>apply</p><pre class="prettyprint linenums">kubectl get namespace --show-labels
+kubectl apply -f instavote-ns.yaml
+kubectl get namespace --show-labels
+
+</pre><p>Now, define a restrictive network policy which would,</p><ul><li><p>Block all incoming connections from any source except for pods from the same namespace</p></li><li><p>Block all outgoing connections</p></li></ul><pre class="prettyprint linenums">  +-----------------------------------------------------------+
+  |                                                           |
+  |    +----------+          +-----------+                    |
+x |    | results  |          | db        |                    |
+  |    |          |          |           |                    |
+  |    +----------+          +-----------+                    |
+  |                                                           |
+  |                                                           |
+  |                                        +----+----+--+     |           
+  |                                        |   worker   |     |            
+  |                                        |            |     |           
+  |                                        +----+-------+     |           
+  |                                                           |
+  |                                                           |
+  |    +----------+          +-----------+                    |
+  |    | vote     |          | redis     |                    |
+x |    |          |          |           |                    |
+  |    +----------+          +-----------+                    |
+  |                                                           |
+  +-----------------------------------------------------------+
+
+</pre><p>file: <code>instavote-netpol.yaml</code></p><pre class="prettyprint linenums">apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+</pre><p><strong>apply</strong></p><pre class="prettyprint linenums">kubectl get netpol
+
+kubectl apply -f instavote-netpol.yaml
+
+kubectl get netpol
+
+kubectl describe netpol/default-deny
+
+</pre><p><strong>Try accessing the vote and results ui. Can you access it ?</strong></p><h4><strong>Setting up ingress rules for outward facing applications</strong></h4><pre class="prettyprint linenums">  +-----------------------------------------------------------+
+  |                                                           |
+  |    +----------+          +-----------+                    |
+=====&gt; | results  |          | db        |                    |
+  |    |          |          |           |                    |
+  |    +----------+          +-----------+                    |
+  |                                                           |
+  |                                                           |
+  |                                        +----+----+--+     |           
+  |                                        |   worker   |     |            
+  |                                        |            |     |           
+  |                                        +----+-------+     |           
+  |                                                           |
+  |                                                           |
+  |    +----------+          +-----------+                    |
+  |    | vote     |          | redis     |                    |
+=====&gt; |          |          |           |                    |
+  |    +----------+          +-----------+                    |
+  |                                                           |
+  +-----------------------------------------------------------+
+
+</pre><p>To the same file, add a new network policy object.</p><p><code>file: instavote-netpol.yaml</code></p><pre class="prettyprint linenums">apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: public-ingress
+  namespace: instavote
+spec:
+  podSelector:
+    matchExpressions:
+      - {key: role, operator: In, values: [vote, results]}
+  policyTypes:
+  - Ingress
+  ingress:
+    - {}
+</pre><p>where,</p><p><em>instavote-ingress</em> is a new network policy which,</p><ul><li><p>defines policy for pods with <strong>vote</strong> and <strong>results</strong> role</p></li><li><p>and allows them incoming access from anywhere</p></li></ul><p>apply</p><pre class="prettyprint linenums">kubectl apply -f instavote-netpol.yaml
+</pre><p><strong>Exercise</strong></p><ul><li><p>Try accessing the ui now and check if you are able to.</p></li><li><p>Try to vote, see if that works? Why ?</p></li></ul><h4><strong>Setting up egress rules to allow communication between services from same project</strong></h4><p>When you tried to vote, you might have observed that it does not work. Thats because the default network policy we created earlier blocks all outgoing traffic. Which is good for securing the environment, however you still need to provide inter connection between services from the same project. Specifically <strong>vote</strong>, <strong>worker</strong> and <strong>results</strong> apps need outgoing connection to <strong>redis</strong> and <strong>db</strong>. Lets allow that with a egress policy.</p><pre class="prettyprint linenums">  +-----------------------------------------------------------+
+  |                                                           |
+  |    +------------+        +-----------+                    |
+=====&gt; | results    | ------&gt;| db        |                    |
+  |    |            |        |           | &lt;-------+          |
+  |    +------------+        +-----------+         |          |
+  |                                                |          |
+  |                                                |          |
+  |                                        +----+----+---+    |           
+  |                                        |   worker    |    |            
+  |                                        |             |    |           
+  |                                        +----+--------+    |           
+  |                                                |          |
+  |                                                |          |
+  |    +----------+          +-----------+         |          |
+  |    | vote     |          | redis     | &lt;-------+          |
+=====&gt; |          |  ------&gt; |           |                    |
+  |    +----------+          +-----------+                    |
+  |                                                           |
+  +-----------------------------------------------------------+
+
+</pre><p>Edit the same policy file and add the following snippet,</p><p><code>file: instavote-netpol.yaml</code></p><pre class="prettyprint linenums">apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          project: instavote
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          project: instavote
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: public-ingress
+  namespace: instavote
+spec:
+  podSelector:
+    matchExpressions:
+      - {key: role, operator: In, values: [vote, results]}
+  policyTypes:
+  - Ingress
+  ingress:
+    - {}
+</pre><p>where,</p><p><em>instavote-egress</em> is a new network policy which,</p><ul><li><p>defines policy for pods with <strong>vote</strong>, <strong>worker</strong> and <strong>results</strong> role</p></li><li><p>and allows them outgoing access to any pods in the same namespace, and that includes <strong>redis</strong> and <strong>db</strong></p></li></ul><p><br></p></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>

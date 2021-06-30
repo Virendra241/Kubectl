@@ -1,0 +1,67 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>101 LAB Running load test as a kubernetes Job</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><h4><strong>Running Load Test as a Job</strong></h4><p><br></p><p><code>file: loadtest-job.yaml</code></p><pre class="prettyprint linenums">apiVersion: batch/v1
+kind: Job
+metadata:
+  name: loadtest
+spec:
+  template:
+    spec:
+      containers:
+      - name: siege
+        image: schoolofdevops/loadtest:v1
+        command: ["siege",  "--concurrent=5", "--benchmark", "--time=10m", "http://vote"]
+      restartPolicy: Never
+  backoffLimit: 4
+</pre><p>And launch the loadtest</p><pre class="prettyprint linenums">kubectl apply -f loadtest-job.yaml
+</pre><p>To monitor while the load test is running ,</p><pre class="prettyprint linenums">watch kubectl top pods
+
+</pre><p>To get information about the job</p><pre class="prettyprint linenums">kubectl get jobs
+kubectl describe  job loadtest
+
+</pre><p>To check the load test output</p><pre class="prettyprint linenums">kubectl logs  -f loadtest-xxxx
+</pre><p>[replace <strong>loadtest-xxxx</strong> with the actual pod id.]</p><p>[Sample Output]</p><pre class="prettyprint linenums">** SIEGE 3.0.8
+** Preparing 15 concurrent users for battle.
+root@kube-01:~# kubectl logs vote-loadtest-tv6r2 -f
+** SIEGE 3.0.8
+** Preparing 15 concurrent users for battle.
+
+.....
+
+
+Lifting the server siege...      done.
+
+Transactions:              41618 hits
+Availability:              99.98 %
+Elapsed time:             299.13 secs
+Data transferred:         127.05 MB
+Response time:              0.11 secs
+Transaction rate:         139.13 trans/sec
+Throughput:             0.42 MB/sec
+Concurrency:               14.98
+Successful transactions:       41618
+Failed transactions:               8
+Longest transaction:            3.70
+Shortest transaction:           0.00
+
+FILE: /var/log/siege.log
+You can disable this annoying message by editing
+the .siegerc file in your home directory; change
+the directive 'show-logfile' to false.
+</pre><p><strong>Now check the job status again,</strong></p><pre class="prettyprint linenums">kubectl get jobs
+NAME            DESIRED   SUCCESSFUL   AGE
+vote-loadtest   1         1            10m
+</pre><p><br></p></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>

@@ -1,0 +1,53 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>068 LAB Providing environment Specific Configs</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><h4><strong>Providing environment Specific Configs</strong></h4><p><br></p><p>Copy the dev env to staging</p><pre class="prettyprint linenums">cd k8s-code/projects/instavote
+cp -r dev staging
+</pre><p>Edit the configurations for staging</p><pre class="prettyprint linenums">cd staging
+
+</pre><p>Edit <em>vote-cm.yaml</em></p><pre class="prettyprint linenums">apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vote
+data:
+  OPTION_A: Apple
+  OPTION_B: Samsung
+</pre><p>Edit <em>vote-svc.yaml</em></p><ul><li><p>remove namespace if set</p></li><li><p>remove extIP</p></li><li><p>remove hard coded nodePort config if any</p></li></ul><p>file: vote-svc.yaml</p><pre class="prettyprint linenums">---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vote
+  labels:
+    role: vote
+spec:
+  selector:
+    role: vote
+  ports:
+    - port: 80
+      targetPort: 80
+  type: NodePort
+</pre><p>Edit <em>vote-deploy.yaml</em></p><ul><li><p>remove namespace if set</p></li><li><p>change replicas to 2</p></li></ul><p>Lets launch it all in another namespace. We could use <strong>default</strong> namespace for this purpose.</p><pre class="prettyprint linenums">kubectl config set-context $(kubectl config  current-context) --namespace=default
+</pre><p><strong>Verify the namespace has been switched by observing the monitoring screen.</strong></p><p>Deploy new objects in this nmespace</p><pre class="prettyprint linenums">kubectl apply -f vote-svc.yaml
+kubectl apply -f vote-cm.yaml
+kubectl apply -f vote-deploy.yaml
+
+</pre><p>Now connect to the vote service by finding out the nodePort configs</p><pre class="prettyprint linenums">kubectl get svc vote
+
+</pre><p><strong>Troubleshooting</strong></p><ul><li><p><strong>Do you see the application when you browse to http://host:nodeport</strong></p></li><li><p>If not, why? Find the root cause and fix it.</p></li></ul><h4><strong>Clean up and Switch back the namespace</strong></h4><p>Verify the environment specific options are in effect. Once verified, you could switch the namespace back to instavote.</p><pre class="prettyprint linenums">kubectl delete deploy/vote svc/vote
+
+kubectl config set-context $(kubectl config  current-context) --namespace=instavote
+
+cd ../dev/
+</pre><p><br></p></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>

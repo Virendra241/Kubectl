@@ -1,0 +1,33 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>050 LAB Exposing Sevice with ExternalIPs</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><h4><strong>Exposing the app with ExternalIP</strong></h4><p><br></p><pre class="prettyprint linenums">spec:
+  selector:
+    role: vote
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  type: NodePort
+  externalIPs:
+    - xx.xx.xx.xx
+    - yy.yy.yy.yy
+</pre><p>Where</p><p>replace xx.xx.xx.xx and yy.yy.yy.yy with IP addresses of the nodes on two of the kubernetes hosts.</p><p>apply</p><pre class="prettyprint linenums">kubectl  get svc
+kubectl apply -f vote-svc.yaml
+kubectl  get svc
+kubectl describe svc vote
+</pre><p>[sample output]</p><pre class="prettyprint linenums">NAME      TYPE       CLUSTER-IP      EXTERNAL-IP                    PORT(S)        AGE
+vote      NodePort   10.107.71.204   206.189.150.190,159.65.8.227   80:30000/TCP   11m
+</pre><p><strong>where,</strong></p><p>EXTERNAL-IP column shows which IPs the application is been exposed on. You could go to http://: to access this application. e.g. http://206.189.150.190:80 where you should replace 206.189.150.190 with the actual IP address of the node that you exposed this on.</p></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>

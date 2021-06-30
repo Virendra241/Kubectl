@@ -1,0 +1,48 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>066 LAB Injecting env variables with configmaps</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><p><br></p><h4><strong>Injecting env variables with configmaps</strong></h4><p><br></p><p>Create our configmap for vote app</p><p>file: projects/instavote/dev/vote-cm.yaml</p><pre class="prettyprint linenums">apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vote
+  namespace: instavote
+data:
+  OPTION_A: Visa
+  OPTION_B: Mastercard
+</pre><p>In the above given configmap, we define two environment variables,</p><ol><li><p>OPTION_A=EMACS</p></li><li><p>OPTION_B=VI</p></li></ol><p>Lets create the configmap object</p><pre class="prettyprint linenums">kubectl get cm
+kubectl apply -f vote-cm.yaml
+kubectl get cm
+kubectl describe cm vote
+
+
+</pre><p>In order to use this configmap in the deployment, we need to reference it from the deployment file.</p><p>Check the deployment file for vote add for the following block.</p><p>file: <code>vote-deploy.yaml</code></p><pre class="prettyprint linenums">...
+    spec:
+      containers:
+      - image: schoolofdevops/vote
+        imagePullPolicy: Always
+        name: vote
+        envFrom:
+          - configMapRef:
+              name: vote
+        ports:
+        - containerPort: 80
+          protocol: TCP
+        restartPolicy: Always
+</pre><p>So when you create your deployment, these configurations will be made available to your application. In this example, the values defined in the configmap (Visa and Mastercard) will override the default values(CATS and DOGS) present in your source code.</p><pre class="prettyprint linenums">kubectl apply -f vote-deploy.yaml
+</pre><p>Watch the monitoring screen for deployment in progress.</p><pre class="prettyprint linenums">kubectl get deploy --show-labels
+kubectl get rs --show-labels
+kubectl  rollout status deploy/vote
+
+</pre><p><img alt="configmap" src="https://schoolofdevops.github.io/ultimate-kubernetes-bootcamp/images/Configmap.png"></p></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>

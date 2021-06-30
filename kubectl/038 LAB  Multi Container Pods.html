@@ -1,0 +1,61 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>038 LAB  Multi Container Pods</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><h4><strong>Creating Multi Container Pods</strong></h4><p><br></p><p>file: multi_container_pod.yml</p><pre class="prettyprint linenums">apiVersion: v1
+kind: Pod
+metadata:
+  name: web
+  labels:
+    tier: front
+    app: nginx
+    role: ui
+spec:
+  containers:
+    - name: nginx
+      image: nginx:stable-alpine
+      ports:
+        - containerPort: 80
+          protocol: TCP
+      volumeMounts:
+        - name: data
+          mountPath: /var/www/html-sample-app
+
+    - name: sync
+      image: schoolofdevops/sync:v2
+      volumeMounts:
+        - name: data
+          mountPath: /var/www/app
+
+  volumes:
+    - name: data
+      emptyDir: {}
+</pre><p>To create this pod</p><pre class="prettyprint linenums">kubectl apply -f multi_container_pod.yml
+</pre><p>Check Status</p><pre class="prettyprint linenums">root@kube-01:~# kubectl get pods
+NAME      READY     STATUS              RESTARTS   AGE
+nginx     0/2       ContainerCreating   0          7s
+vote      1/1       Running             0          3m
+</pre><p>Checking logs, logging in</p><pre class="prettyprint linenums">kubectl logs  web  -c sync
+kubectl logs  web  -c nginx
+
+kubectl exec -it web  sh  -c nginx
+kubectl exec -it web  sh  -c sync
+
+</pre><p>Observe whats common and whats isolated in two containers running inside the same pod using the following commands,</p><p>shared</p><pre class="prettyprint linenums">hostname
+ifconfig
+</pre><p>isolated</p><pre class="prettyprint linenums">cat /etc/issue
+ps aux
+df -h
+
+</pre><p><br></p></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>

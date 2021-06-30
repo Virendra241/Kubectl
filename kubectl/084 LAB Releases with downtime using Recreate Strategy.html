@@ -1,0 +1,53 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>084 LAB Releases with downtime using Recreate Strategy</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><h4><strong>Releases with downtime using Recreate Strategy</strong></h4><p>When the <strong>Recreate</strong> deployment strategy is used, * The old pods will be deleted * Then the new pods will be created.</p><p>This will create some downtime in our stack.</p><p>Let us change the deployment strategy to <strong>recreate</strong> and image tag to <em>v4</em>.</p><pre class="prettyprint linenums">cp vote-deploy.yaml vote-deploy-recreate.yaml
+</pre><p>And edit the specs with following changes</p><ul><li><p>Update strategy to <strong>Recreate</strong></p></li><li><p>Remove rolling update specs</p></li></ul><p><code>file: vote-deploy-recreate.yaml</code></p><pre class="prettyprint linenums">apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vote
+spec:
+  strategy:
+    type: Recreate
+  revisionHistoryLimit: 4
+  paused: false
+  replicas: 15
+  minReadySeconds: 20
+  selector:
+    matchLabels:
+      role: vote
+    matchExpressions:
+      - {key: version, operator: In, values: [v1, v2, v3, v4]}
+  template:
+    metadata:
+      name: vote
+      labels:
+        app: python
+        role: vote
+        version: v4
+    spec:
+      containers:
+        - name: app
+          image: schoolofdevops/vote:v4
+          ports:
+            - containerPort: 80
+              protocol: TCP
+</pre><p>and apply</p><pre class="prettyprint linenums">kubectl get pods,rs,deploy,svc
+
+kubectl apply -f vote-deploy-recreate.yaml
+
+kubectl rollout status deplloyment/vote
+
+</pre><p>While the deployment happens, use the monitoring/visualiser and observe the manner in which the deployment gets updated.</p><p>You would observe that</p><ul><li><p>All pods wit the current version are deleted first</p></li><li><p>Only after all the existing pods are deleted, pods with new version are launched</p></li></ul></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>

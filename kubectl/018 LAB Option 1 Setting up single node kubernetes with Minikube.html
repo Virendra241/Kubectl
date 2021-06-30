@@ -1,0 +1,48 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>018 LAB Option 1 Setting up single node kubernetes with Minikube</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><h4><strong>Single node k8s cluster with Minikube</strong></h4><p><br></p><p>Minikube offers one of the easiest zero to dev experience to setup a single node kubernetes cluster. Its also the ideal way to create a local dev environment to test kubernetes code on.</p><p>This document explains how to setup and work with single node kubernetes cluster with minikube.</p><h4>Install Minikube</h4><p>Instructions to install minikube may vary based on the operating system and choice of the hypervisor. <a href="https://kubernetes.io/docs/tasks/tools/install-minikube/" rel="noopener noreferrer" target="_blank">This is the official document</a> which explains how to install minikube.</p><h4>Start all in one single node cluster with minikube</h4><pre class="prettyprint linenums">minikube status
+</pre><p>[output]</p><pre class="prettyprint linenums">minikube:
+cluster:
+kubectl:
+</pre><pre class="prettyprint linenums">minikube start
+</pre><p><strong>[output]</strong></p><pre class="prettyprint linenums">Starting local Kubernetes v1.8.0 cluster...
+Starting VM...
+Getting VM IP address...
+Moving files into cluster...
+Setting up certs...
+Connecting to cluster...
+Setting up kubeconfig...
+Starting cluster components...
+Kubectl is now configured to use the cluster.
+Loading cached images from config file.
+</pre><pre class="prettyprint linenums">minikube status
+
+</pre><p><strong>[output]</strong></p><pre class="prettyprint linenums">minikube: Running
+cluster: Running
+kubectl: Correctly Configured: pointing to minikube-vm at 192.168.99.100
+</pre><h4><strong>Launch a kubernetes dashboard</strong></h4><pre class="prettyprint linenums">minikube dashboard
+</pre><h4><strong>Setting up docker environment</strong></h4><pre class="prettyprint linenums">minikube docker-env
+export DOCKER_TLS_VERIFY="1"
+export DOCKER_HOST="tcp://192.168.99.100:2376"
+export DOCKER_CERT_PATH="/Users/gouravshah/.minikube/certs"
+export DOCKER_API_VERSION="1.23"
+# Run this command to configure your shell:
+# eval $(minikube docker-env)
+</pre><p>Run the command given above, e.g.</p><pre class="prettyprint linenums">eval $(minikube docker-env)
+</pre><p><strong>Now your docker client should be able to connect with the minikube cluster</strong></p><pre class="prettyprint linenums">docker ps
+</pre><h4><strong>Additional Commands</strong></h4><pre class="prettyprint linenums">minikube ip
+minikube get-k8s-versions
+minikube logs</pre></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>

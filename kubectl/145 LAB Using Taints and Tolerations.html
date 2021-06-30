@@ -1,0 +1,69 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>145 LAB Using Taints and Tolerations</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><h4><strong>Taints and tolerations</strong></h4><ul><li><p>Affinity is defined for pods</p></li><li><p>Taints are defined for nodes</p></li></ul><p>You could add the taints with criteria and effects. Effetcs can be</p><p><strong>Taint Specs</strong>:</p><ul><li><p>effect</p><ul><li><p>NoSchedule</p></li><li><p>PreferNoSchedule</p></li><li><p>NoExecute</p></li></ul></li><li><p>key</p></li><li><p>value</p></li><li><p>timeAdded (only written for NoExecute taints)</p></li></ul><p>Observe the pods distribution</p><pre class="prettyprint linenums">$ kubectl get pods -o wide
+NAME                      READY     STATUS    RESTARTS   AGE       IP             NODE
+db-66496667c9-qggzd       1/1       Running   0          4h        10.233.74.74   node4
+redis-5bf748dbcf-gr8zg    1/1       Running   0          27m       10.233.75.14   node2
+redis-5bf748dbcf-vxppx    1/1       Running   0          27m       10.233.74.79   node4
+result-5c7569bcb7-4fptr   1/1       Running   0          4h        10.233.71.18   node3
+result-5c7569bcb7-s4rdx   1/1       Running   0          4h        10.233.74.75   node4
+vote-56bf599b9c-22lpw     1/1       Running   0          26m       10.233.74.80   node4
+vote-56bf599b9c-4l6bc     1/1       Running   0          8m        10.233.74.83   node4
+vote-56bf599b9c-bqsrq     1/1       Running   0          8m        10.233.74.82   node4
+vote-56bf599b9c-xw7zc     1/1       Running   0          8m        10.233.74.81   node4
+worker-7c98c96fb4-7tzzw   1/1       Running   1          4h        10.233.75.8    node2
+</pre><p>Lets taint a node.</p><pre class="prettyprint linenums">kubectl taint node node2 dedicated=worker:NoExecute
+</pre><p><strong>after taining the node</strong></p><pre class="prettyprint linenums">$ kubectl get pods -o wide
+NAME                      READY     STATUS    RESTARTS   AGE       IP               NODE
+db-66496667c9-qggzd       1/1       Running   0          4h        10.233.74.74     node4
+redis-5bf748dbcf-ckn65    1/1       Running   0          2m        10.233.71.26     node3
+redis-5bf748dbcf-vxppx    1/1       Running   0          30m       10.233.74.79     node4
+result-5c7569bcb7-4fptr   1/1       Running   0          4h        10.233.71.18     node3
+result-5c7569bcb7-s4rdx   1/1       Running   0          4h        10.233.74.75     node4
+vote-56bf599b9c-22lpw     1/1       Running   0          29m       10.233.74.80     node4
+vote-56bf599b9c-4l6bc     1/1       Running   0          11m       10.233.74.83     node4
+vote-56bf599b9c-bqsrq     1/1       Running   0          11m       10.233.74.82     node4
+vote-56bf599b9c-xw7zc     1/1       Running   0          11m       10.233.74.81     node4
+worker-7c98c96fb4-46ltl   1/1       Running   0          2m        10.233.102.140   node1
+</pre><p><strong>All pods running on node2 just got evicted.</strong></p><p>Add toleration in the Deployment for worker.</p><p><code>File: worker-deploy.yml</code></p><pre class="prettyprint linenums">apiVersion: apps/v1
+.....
+  template:
+....
+    spec:
+      containers:
+        - name: app
+          image: schoolofdevops/vote-worker:latest
+
+      tolerations:
+        - key: "dedicated"
+          operator: "Equal"
+          value: "worker"
+          effect: "NoExecute"
+</pre><p>apply</p><pre class="prettyprint linenums">kubectl apply -f worker-deploy.yml
+
+</pre><p>Observe the pod distribution now.</p><pre class="prettyprint linenums">$ kubectl get pods -o wide
+NAME                      READY     STATUS    RESTARTS   AGE       IP             NODE
+db-66496667c9-qggzd       1/1       Running   0          4h        10.233.74.74   node4
+redis-5bf748dbcf-ckn65    1/1       Running   0          3m        10.233.71.26   node3
+redis-5bf748dbcf-vxppx    1/1       Running   0          31m       10.233.74.79   node4
+result-5c7569bcb7-4fptr   1/1       Running   0          4h        10.233.71.18   node3
+result-5c7569bcb7-s4rdx   1/1       Running   0          4h        10.233.74.75   node4
+vote-56bf599b9c-22lpw     1/1       Running   0          30m       10.233.74.80   node4
+vote-56bf599b9c-4l6bc     1/1       Running   0          12m       10.233.74.83   node4
+vote-56bf599b9c-bqsrq     1/1       Running   0          12m       10.233.74.82   node4
+vote-56bf599b9c-xw7zc     1/1       Running   0          12m       10.233.74.81   node4
+worker-6cc8dbd4f8-6bkfg   1/1       Running   0          1m        10.233.75.15   node2
+</pre><p><strong>You should see worker being scheduled on node2</strong></p><p>To remove the taint created above</p><pre class="prettyprint linenums">kubectl taint node node2 dedicate:NoExecute-</pre></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>

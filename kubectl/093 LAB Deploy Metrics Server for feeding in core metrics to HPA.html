@@ -1,0 +1,28 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>093 LAB Deploy Metrics Server for feeding in core metrics to HPA</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><h4><strong>Kubernetes Horizonntal Pod Autoscaling</strong></h4><p>With Horizontal Pod Autoscaling, Kubernetes automatically scales the number of pods in a replication controller, deployment or replica set based on observed CPU utilization (or, with alpha support, on some other, application-provided metrics).</p><p>The Horizontal Pod Autoscaler is implemented as a Kubernetes API resource and a controller. The resource determines the behavior of the controller. The controller periodically adjusts the number of replicas in a replication controller or deployment to match the observed average CPU utilization to the target specified by user</p><h4>Prerequisites</h4><ul><li><p><a href="https://github.com/kubernetes-incubator/metrics-server" rel="noopener noreferrer" target="_blank">Metrics Server</a>. This needs to be setup if you are using kubeadm etc. and replaces <strong>heapster</strong> starting with kubernetes version 1.8.</p></li><li><p>Resource Requests and Limits. Defining <a href="https://kubernetes.io/docs/tasks/configure-pod-container/assign-cpu-resource/#specify-a-cpu-request-and-a-cpu-limit" rel="noopener noreferrer" target="_blank">CPU</a>as well as <a href="https://kubernetes.io/docs/tasks/configure-pod-container/assign-memory-resource/" rel="noopener noreferrer" target="_blank">Memory</a> requirements for containers in Pod Spec is a must</p></li></ul><h4><strong>Deploying Metrics Server</strong></h4><p>Kubernetes Horizontal Pod Autoscaler along with <code>kubectl top</code> command depends on the core monitoring data such as cpu and memory utilization which is scraped and provided by kubelet, which comes with in built cadvisor component. Earlier, you would have to install a additional component called <strong>heapster</strong> in order to collect this data and feed it to the <strong>hpa</strong> controller. With 1.8 version of Kubernetes, this behavior is changed, and now <strong>metrics-server</strong> would provide this data. Metric server is being included as a essential component for kubernetes cluster, and being incroporated into kubernetes to be included out of box. It stores the core monitoring information using in-memory data store.</p><p>If you try to pull monitoring information using the following commands</p><pre class="prettyprint linenums">kubectl top pod
+
+kubectl top node
+</pre><p>it does not show it, rather gives you a error message similar to</p><p>[output]</p><pre class="prettyprint linenums">Error from server (NotFound): the server could not find the requested resource (get services http:heapster:)
+</pre><p>Even though the error mentions heapster, its replaced with metrics server by default now.</p><p>Deploy metric server with the following commands,</p><pre class="prettyprint linenums">git clone  https://github.com/kubernetes-incubator/metrics-server.git
+kubectl apply -f kubectl create -f metrics-server/deploy/1.8+/
+</pre><p>Validate</p><pre class="prettyprint linenums">kubectl get deploy,pods -n kube-system --selector='k8s-app=metrics-server'
+</pre><p><strong>[sample output]</strong></p><pre class="prettyprint linenums">NAME                                   DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
+deployment.extensions/metrics-server   1         1         1            1           28m
+
+NAME                                  READY     STATUS    RESTARTS   AGE
+pod/metrics-server-6fbfb84cdd-74jww   1/1       Running   0          28m
+</pre><p><strong>Monitoring has been setup.</strong></p></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>

@@ -1,0 +1,60 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>056 LAB Create and rollout a Deployment</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><h4><strong>Creating a Deployment</strong></h4><p>A Deployment is a higher level abstraction which sits on top of replica sets and allows you to manage the way applications are deployed, rolled back at a controlled rate.</p><p>Deployment has mainly two responsibilities,</p><ul><li><p>Provide Fault Tolerance: Maintain the number of replicas for a type of service/app. Schedule/delete pods to meet the desired count.</p></li><li><p>Update Strategy: Define a release strategy and update the pods accordingly.</p></li></ul><pre class="prettyprint linenums">/k8s-code/projects/instavote/dev/
+cp vote-rs.yaml vote-deploy.yaml
+</pre><p>Deployment spec (deployment.spec) contains everything that replica set has + strategy. Lets add it as follows,</p><p>File: vote-deploy.yaml</p><pre class="prettyprint linenums">apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vote
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 2
+      maxUnavailable: 1
+  revisionHistoryLimit: 4
+  paused: false
+  replicas: 8
+  minReadySeconds: 20
+  selector:
+    matchLabels:
+      role: vote
+    matchExpressions:
+      - {key: version, operator: In, values: [v1, v2, v3]}
+  template:
+    metadata:
+      name: vote
+      labels:
+        app: python
+        role: vote
+        version: v2
+    spec:
+      containers:
+        - name: app
+          image: schoolofdevops/vote:v2
+          ports:
+            - containerPort: 80
+              protocol: TCP
+</pre><p>This time, start monitoring with --show-labels options added.</p><pre class="prettyprint linenums">watch -n 1 kubectl get  pod,deploy,rs,svc --show-labels
+</pre><p>Lets create the Deployment. Do monitor the labels of the pod while applying this.</p><pre class="prettyprint linenums">kubectl apply -f vote-deploy.yaml
+</pre><p>Observe the chances to pod labels, specifically the <strong>pod-template-hash</strong>.</p><p>Now that the deployment is created. To validate,</p><pre class="prettyprint linenums">kubectl get deployment
+kubectl get rs --show-labels
+kubectl get deploy,pods,rs
+kubectl rollout status deployment/vote
+kubectl get pods --show-labels
+</pre><p>Sample Output</p><pre class="prettyprint linenums">kubectl get deployments
+NAME       DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
+vote   3         3         3            1           3m</pre></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>

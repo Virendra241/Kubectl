@@ -1,0 +1,53 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>141 LAB Defining Node Affinity</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><h4><strong>Defining affinity and anti-affinity</strong></h4><p>We have discussed about scheduling a pod on a particular node using <strong>NodeSelector</strong>, but using node selector is a hard condition. If the condition is not met, the pod cannot be scheduled. Node/Pod affinity and anti-affinity solves this issue by introducing soft and hard conditions.</p><ul><li><p>required</p></li><li><p>preferred</p></li><li><p>DuringScheduling</p></li><li><p>DuringExecution</p></li></ul><p>Operators</p><ul><li><p>In</p></li><li><p>NotIn</p></li><li><p>Exists</p></li><li><p>DoesNotExist</p></li><li><p>Gt</p></li><li><p>Lt</p></li></ul><h4>Node Affinity</h4><p>Examine the current pod distribution</p><pre class="prettyprint linenums">kubectl get pods -o wide --selector="role=vote"
+
+</pre><pre class="prettyprint linenums">NAME                    READY     STATUS    RESTARTS   AGE       IP               NODE
+vote-8546bbd84d-22d6x   1/1       Running   0          35s       10.233.102.137   node1
+vote-8546bbd84d-8f9bc   1/1       Running   0          1m        10.233.102.136   node1
+vote-8546bbd84d-bpg8f   1/1       Running   0          1m        10.233.75.12     node2
+vote-8546bbd84d-d8j9g   1/1       Running   0          1m        10.233.75.13     node2
+</pre><p><strong>and node labels</strong></p><pre class="prettyprint linenums">kubectl get nodes --show-labels
+
+</pre><pre class="prettyprint linenums">NAME      STATUS    ROLES         AGE       VERSION   LABELS
+node1     Ready     master,node   1d        v1.10.4   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/hostname=node1,node-role.kubernetes.io/master=true,node-role.kubernetes.io/node=true,zone=bbb
+node2     Ready     master,node   1d        v1.10.4   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/hostname=node2,node-role.kubernetes.io/master=true,node-role.kubernetes.io/node=true,zone=bbb
+node3     Ready     node          1d        v1.10.4   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/hostname=node3,node-role.kubernetes.io/node=true,zone=aaa
+node4     Ready     node          1d        v1.10.4   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/hostname=node4,node-role.kubernetes.io/node=true,zone=aaa
+</pre><p>Lets create node affinity criteria as</p><ul><li><p>Pods for vote app <strong>must</strong> not run on the master nodes</p></li><li><p>Pods for vote app <strong>preferably</strong> run on a node in zone <strong>bbb</strong></p></li></ul><p>First is a <strong>hard</strong> affinity versus second being <strong>soft</strong> affinity.</p><p><code>file: vote-deploy.yaml</code></p><pre class="prettyprint linenums">....
+  template:
+....
+    spec:
+      containers:
+        - name: app
+          image: schoolofdevops/vote:v1
+          ports:
+            - containerPort: 80
+              protocol: TCP
+
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/master
+                operator: DoesNotExist
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              preference:
+                matchExpressions:
+                - key: zone
+</pre><p><br></p></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>

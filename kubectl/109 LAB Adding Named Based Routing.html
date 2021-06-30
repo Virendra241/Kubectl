@@ -1,0 +1,73 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>109 LAB Adding Named Based Routing</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><p>Setting up Named Based Routing for Vote App</p><p>We will direct all our request to the ingress controller now, but with differnt hostname e.g. <strong>vote.example.org</strong> or <strong>results.example.org</strong>. And it should direct to the correct service based on the host name.</p><p>In order to achieve this you, as a user would create a <strong>ingress</strong> object with a set of rules,</p><pre class="prettyprint linenums">+----+----+--+            
+| ingress    |            
+| controller |            
++----+-------+            
+     |              +-----+----+
+     +---watch----&gt; | ingress  | &lt;------- user
+                    +----------+
+
+</pre><p><code>file: vote-ing.yaml</code></p><pre class="prettyprint linenums">apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: vote
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    ingress.kubernetes.io/auth-type: "basic"
+    ingress.kubernetes.io/auth-secret: "mysecret"
+spec:
+  rules:
+    - host: vote.example.org
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: vote
+              servicePort: 82
+    - host: results.example.org
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: results
+              servicePort: 81
+</pre><p>And apply</p><pre class="prettyprint linenums">kubectl get ing
+kubectl apply -f vote-ing.yaml --dry-run
+kubectl apply -f vote-ing.yaml
+</pre><p>Since the ingress controller is constantly monitoring for the ingress objects, the moment it detects, it connects with traefik and creates a rule as follows.</p><pre class="prettyprint linenums">                    +----------+
+     +--create----&gt; | traefik  |
+     |              |  rules   |
+     |              +----------+
++----+----+--+            ^
+| ingress    |            :
+| controller |            :
++----+-------+            :
+     |              +-----+----+
+     +---watch----&gt; | ingress  | &lt;------- user
+                    +----------+
+
+</pre><p>where,</p><ul><li><p>A user creates a ingress object with the rules. This could be a named based or a path based routing.</p></li><li><p>An ingress controller, in this example traefik constantly monitors for ingress objects. The moment it detects one, it creates a rule and adds it to the traefik load balancer. This rule maps to the ingress specs.</p></li></ul><p>You could now see the rule added to ingress controller,</p><p><img alt="Traefik with Ingress Rules" src="http://127.0.0.1:8000/images/traefik02.png"></p><p>Where,</p><ul><li><p><strong>vote.example.org</strong> and <strong>results.example.org</strong> are added as frontends. These frontends point to respective services <strong>vote</strong> and <strong>results</strong>.</p></li><li><p>respective backends also appear on the right hand side of the screen, mapping to each of the service.</p></li></ul><h4>Adding Local DNS</h4><p>You have created the ingress rules based on hostnames e.g. <strong>vote.example.org</strong> and <strong>results.example.org</strong>. In order for you to be able to access those, there has to be a dns entry pointing to your nodes, which are running traefik.</p><pre class="prettyprint linenums">  vote.example.org     -------+                        +----- vote:81
+                              |     +-------------+    |
+                              |     |   ingress   |    |
+                              +===&gt; |   node:80   | ===+
+                              |     +-------------+    |
+                              |                        |
+  results.example.org  -------+                        +----- results:82
+
+</pre><p>To achieve this you need to either,</p><ul><li><p>Create a DNS entry, provided you own the domain and have access to the dns management console.</p></li><li><p>Create a local <strong>hosts</strong> file entry. On unix systems its in <code>/etc/hosts</code> file. On windows its at <code>C:\Windows\System32\drivers\etc\hosts</code>. You need admin access to edit this file.</p></li></ul><p>For example, on a linux or osx, you could edit it as,</p><pre class="prettyprint linenums">sudo vim /etc/hosts
+</pre><p>And add an entry such as ,</p><pre class="prettyprint linenums">xxx.xxx.xxx.xxx vote.example.org results.example.org
+</pre><p>where,</p><ul><li><p>xxx.xxx.xxx.xxx is the actual IP address of one of the nodes running traefik.</p></li></ul><p>And then access the app urls using http://vote.example.org or http://results.example.org</p><p><img alt="Name Based Routing" src="http://127.0.0.1:8000/images/domain-name.png"></p><p><br></p></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>

@@ -1,0 +1,36 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>045 LAB ReplicaSet in Action</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><h4><strong>Replica Sets in Action</strong></h4><p><br></p><p>If you are not running a monitoring screen, start it in a new terminal with the following command.</p><pre class="prettyprint linenums">watch -n 1 kubectl get  pod,deploy,rs,svc
+</pre><pre class="prettyprint linenums">kubectl delete pod vote</pre><p><br></p><pre class="prettyprint linenums">kubectl apply -f vote-rs.yaml --dry-run
+
+kubectl apply -f vote-rs.yaml
+
+kubectl get rs
+
+kubectl describe rs vote
+
+kubectl get pods
+
+
+</pre><p><strong>Exercise</strong> :</p><ul><li><p>Switch to monitoring screen, observe how many replicas were created and why</p></li><li><p>Compare selectors and labels of the pods created with and without replica sets</p></li></ul><pre class="prettyprint linenums">kubectl get pods
+
+kubectl get pods --show-labels
+</pre><h4>Exercise: Deploying new version of the application</h4><pre class="prettyprint linenums">kubectl edit rs/vote
+</pre><p>Update the version of the image from <strong>schoolofdevops/vote:v1</strong> to <strong>schoolofdevops/vote:v2</strong></p><p>Save the file. Observe if application got updated. Note what do you observe. Do you see the new version deployed ??</p><h4><strong>Exercise: Self Healing Replica Sets</strong></h4><p>List the pods and kill some of those, see what replica set does.</p><pre class="prettyprint linenums">kubectl get pods
+kubectl delete pods  vote-xxxx  vote-yyyy
+</pre><p>where replace xxxx and yyyy with actual pod ids.</p><p>Questions:</p><ul><li><p>Did replica set replaced the pods ?</p></li><li><p>Which version of the application is running now ?</p></li></ul><p>Lets now delete the pod created independent of replica set.</p><pre class="prettyprint linenums">kubectl get pods
+kubectl delete pods  vote
+</pre><p><strong>Observe what happens. </strong></p><p><strong>  * Does replica set take any action after deleting the pod created outside of its spec ? Why?</strong></p></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>

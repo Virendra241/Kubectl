@@ -1,0 +1,69 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>139 LAB Using NodeSelector</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><h4><strong>Advanced Pod Scheduling</strong></h4><p>In the Kubernetes bootcamp training, we have seen how to create a pod and and some basic pod configurations to go with it. But this chapter explains some advanced topics related to pod scheduling.</p><p>From the <a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#pod-v1-core" rel="noopener noreferrer" target="_blank">api document for version 1.11</a> following are the pod specs which are relevant from scheduling perspective.</p><ul><li><p>nodeSelector</p></li><li><p>nodeName</p></li><li><p>affinity</p></li><li><p>schedulerName</p></li><li><p>tolerations</p></li></ul><h4>Using Node Selectors</h4><pre class="prettyprint linenums">kubectl get nodes --show-labels
+
+kubectl label nodes &lt;node-name&gt; zone=aaa
+
+kubectl get nodes --show-labels
+
+</pre><p>e.g.</p><pre class="prettyprint linenums">kubectl label nodes node1 zone=bbb
+kubectl label nodes node2 zone=bbb
+kubectl label nodes node3 zone=aaa
+kubectl label nodes node4 zone=aaa
+kubectl get nodes --show-labels
+</pre><p>[sample output]</p><pre class="prettyprint linenums">NAME      STATUS    ROLES         AGE       VERSION   LABELS
+node1     Ready     master,node   22h       v1.10.4   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/hostname=node1,node-role.kubernetes.io/master=true,node-role.kubernetes.io/node=true,zone=bbb
+node2     Ready     master,node   22h       v1.10.4   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/hostname=node2,node-role.kubernetes.io/master=true,node-role.kubernetes.io/node=true,zone=bbb
+node3     Ready     node          22h       v1.10.4   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/hostname=node3,node-role.kubernetes.io/node=true,zone=aaa
+node4     Ready     node          21h       v1.10.4   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/hostname=node4,node-role.kubernetes.io/node=true,zone=aaa
+</pre><p>Check how the pods are distributed on the nodes using the following command,</p><pre class="prettyprint linenums">kubectl get pods -o wide --selector="role=vote"
+NAME                    READY     STATUS    RESTARTS   AGE       IP               NODE
+vote-5d88d47fc8-6rflg   1/1       Running   0          1m        10.233.75.9      node2
+vote-5d88d47fc8-gbzbq   1/1       Running   0          1h        10.233.74.76     node4
+vote-5d88d47fc8-q4vj6   1/1       Running   0          1h        10.233.102.133   node1
+vote-5d88d47fc8-znd2z   1/1       Running   0          1m        10.233.71.20     node3
+</pre><p>From the above output, you could see that the pods running <strong>vote</strong> app are currently equally distributed. Now, update pod definition to make it schedule only on nodes in zone <strong>bbb</strong></p><p><code>file: k8s-code/pods/vote-pod.yml</code></p><pre class="prettyprint linenums">....
+
+template:
+...
+  spec:
+    containers:
+      - name: app
+        image: schoolofdevops/vote:v1
+        ports:
+          - containerPort: 80
+            protocol: TCP
+    nodeSelector:
+      zone: 'bbb'
+</pre><p><strong>For this change, pod needs to be re created.</strong></p><pre class="prettyprint linenums">kubectl apply -f vote-pod.yml
+</pre><p>You would notice that, the moment you make that change, a new rollout kicks off, which will start redistributing the pods, now following the <strong>nodeSelector</strong> constraint that you added.</p><p>Watch the output of the following command</p><pre class="prettyprint linenums">watch kubectl get pods -o wide --selector="role=vote"
+
+</pre><p><strong>You will see the following while it transitions</strong></p><pre class="prettyprint linenums">NAME                        READY     STATUS              RESTARTS   AGE       IP               NODE
+pod/vote-5d88d47fc8-6rflg   0/1       Terminating         0          5m        10.233.75.9      node2
+pod/vote-5d88d47fc8-gbzbq   0/1       Terminating         0          1h        10.233.74.76     node4
+pod/vote-5d88d47fc8-q4vj6   0/1       Terminating         0          1h        10.233.102.133   node1
+pod/vote-67d7dd8f89-2w5wl   1/1       Running             0          44s       10.233.75.10     node2
+pod/vote-67d7dd8f89-gm6bq   0/1       ContainerCreating   0          2s        &lt;none&gt;           node2
+pod/vote-67d7dd8f89-w87n9   1/1       Running             0          44s       10.233.102.134   node1
+pod/vote-67d7dd8f89-xccl8   1/1       Running             0          44s       10.233.102.135   node1
+
+</pre><p><strong>and after the rollout completes,</strong></p><pre class="prettyprint linenums">NAME                    READY     STATUS    RESTARTS   AGE       IP               NODE
+vote-67d7dd8f89-2w5wl   1/1       Running   0          2m        10.233.75.10     node2
+vote-67d7dd8f89-gm6bq   1/1       Running   0          1m        10.233.75.11     node2
+vote-67d7dd8f89-w87n9   1/1       Running   0          2m        10.233.102.134   node1
+vote-67d7dd8f89-xccl8   1/1       Running   0          2m        10.233.102.135   node1
+
+</pre><h4><strong>Exercise</strong></h4><p>Just like <strong>nodeSelector</strong> above, you could enforce a pod to run on a specific node using <strong>nodeName</strong>. Try using that property to run all pods for results application on <strong>node3</strong></p></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>

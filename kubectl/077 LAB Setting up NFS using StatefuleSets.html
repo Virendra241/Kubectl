@@ -1,0 +1,21 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>077 LAB Setting up NFS using StatefuleSets</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><p>Set up NFS Common</p><p>On all kubernetes nodes, if you have not already installed nfs, use the following command to do so</p><pre class="prettyprint linenums">sudo apt-get update
+sudo apt-get install nfs-common
+</pre><p>[Skip this step if you are using a vagrant setup recommended as part of this course. ]</p><h4><strong>Set up NFS Provisioner in kubernetes</strong></h4><p>Change into nfs provisioner installation dir</p><pre class="prettyprint linenums">cd k8s-code/storage
+</pre><p>Deploy nfs-client provisioner.</p><pre class="prettyprint linenums">kubectl apply -f nfs
+
+</pre><p>This will create all the objects required to setup a nfs provisioner.</p></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>

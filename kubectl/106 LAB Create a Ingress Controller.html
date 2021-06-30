@@ -1,0 +1,38 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>106 LAB Create a Ingress Controller</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><h4><strong>Ingress</strong></h4><h4>Pre Requisites</h4><ul><li><p>Ingress controller such as Nginx, Trafeik needs to be deployed before creating ingress resources.</p></li><li><p>On GCE, ingress controller runs on the master. On all other installations, it needs to be deployed, either as a deployment, or a daemonset. In addition, a service needs to be created for ingress.</p></li><li><p>Daemonset will run ingress on each node. Deployment will just create a highly available setup, which can then be exposed on specific nodes using ExternalIPs configuration in the service.</p></li></ul><h4><strong>Create a Ingress Controller</strong></h4><p>An ingress controller needs to be created in order to serve the ingress requests. Kubernetes comes with support for <strong>GCE</strong> and <strong>nginx</strong> ingress controllers, however additional softwares are commonly used too. As part of this implementation you are going to use <a href="https://traefik.io/" rel="noopener noreferrer" target="_blank">Traefik</a> as the ingress controller. Its a fast and lightweight ingress controller and also comes with great documentation and support.</p><pre class="prettyprint linenums">+----+----+--+            
+| ingress    |            
+| controller |            
++----+-------+            
+
+
+</pre><p>There are commonly two ways you could deploy an ingress</p><ul><li><p>Using Deployments with HA setup</p></li><li><p>Using DaemonSets which run on every node</p></li></ul><p>We pick <strong>DaemonSet</strong>, which will ensure that one instance of <strong>traefik</strong> is run on every node. Also, we use a specific configuration <strong>hostNetwork</strong> so that the pod running <strong>traefik</strong> attaches to the network of underlying host, and not go through <strong>kube-proxy</strong>. This would avoid extra network hop and increase performance a bit.</p><p>Deploy ingress controller with daemonset as</p><pre class="prettyprint linenums">cd k8s-code/ingress/traefik
+
+kubectl get ds -n kube-system
+
+kubectl apply -f traefik-rbac.yaml
+kubectl apply -f traefik-ds.yaml
+</pre><p>Validate</p><pre class="prettyprint linenums">kubectl get svc,ds,pods -n kube-system  --selector='k8s-app=traefik-ingress-lb'
+</pre><p><strong>[output]</strong></p><pre class="prettyprint linenums">NAME                              TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)           AGE
+service/traefik-ingress-service   ClusterIP   10.109.182.203   &lt;none&gt;        80/TCP,8080/TCP   1h
+
+NAME                                              DESIRED   CURRENT   READY     UP-TO-DATE   AVAILABLE   NODE SELECTOR   AGE
+daemonset.extensions/traefik-ingress-controller   2         2         2         2            2           &lt;none&gt;          1h
+
+NAME                                   READY     STATUS    RESTARTS   AGE
+pod/traefik-ingress-controller-bmwn7   1/1       Running   0          1h
+pod/traefik-ingress-controller-vl296   1/1       Running   0          1h
+</pre><p><strong>You would notice that the ingress controller is started on all nodes (except managers). Visit any of the nodes 8080 port e.g. http://IPADDRESS:8080 to see traefik's management UI.</strong></p><p><img alt="Traefik" src="http://127.0.0.1:8000/images/traefik01.png"></p><p><br></p></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>

@@ -1,0 +1,36 @@
+<html>
+                <head>
+                <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+                <title>060 MINI PROJECT  Deploy instavote app stack with Kubernetes</title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <p class="lead"><h4><strong>Mini Project: Deploying Multi Tier Application Stack</strong></h4><p><br></p><p>In this project , you would write definitions for deploying the vote application stack with all components/tiers which include,</p><ul><li><p>vote ui</p></li><li><p>redis</p></li><li><p>worker</p></li><li><p>db</p></li><li><p>results ui</p></li></ul><h4>Tasks</h4><ul><li><p>Create deployments for all applications</p></li><li><p>Define services for each tier applicable</p></li><li><p>Launch/apply the definitions</p></li></ul><p>Following table  depicts the state of readiness of the above services.</p><figure><img src="https://udemy-images.s3.amazonaws.com:443/redactor/raw/2018-08-04_15-23-03-ece253ddd415c6fb1b03b80de25a62b3.png"></figure><p><br></p><p><br></p><p><br></p><p><strong>Specs:</strong></p><ul><li><p>worker</p><ul><li><p>image: schoolofdevops/worker:latest</p></li></ul></li><li><p>results</p><ul><li><p>image: schoolofdevops/vote-result</p></li><li><p>port: 80</p></li><li><p>service type: NodePort</p></li></ul></li></ul><p><br></p><h4><strong>Deploying the sample application</strong></h4><p><br></p><p>To create deploy the sample applications,</p><pre class="prettyprint linenums">kubectl create -f projects/instavote/dev
+</pre><p>Sample output is like:</p><pre class="prettyprint linenums">deployment "db" created
+service "db" created
+deployment "redis" created
+service "redis" created
+deployment "vote" created
+service "vote" created
+deployment "worker" created
+deployment "results" created
+service "results" created
+</pre><h4><strong>To Validate:</strong></h4><pre class="prettyprint linenums">kubectl get svc -n instavote
+</pre><p><strong>Sample Output is:</strong></p><pre class="prettyprint linenums">kubectl get service vote
+NAME         CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+vote   10.97.104.243   &lt;pending&gt;     80:31808/TCP   1h
+</pre><p><strong>Here the port assigned is 31808, go to the browser and enter</strong></p><pre class="prettyprint linenums">masterip:31808
+</pre><p><img alt="alt text" src="https://schoolofdevops.github.io/ultimate-kubernetes-bootcamp/images/vote-rc.png"></p><p>This will load the page where you can vote.</p><p>To check the result:</p><pre class="prettyprint linenums">kubectl get service result
+</pre><p>Sample Output is:</p><pre class="prettyprint linenums">kubectl get service result
+NAME      CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+result    10.101.112.16   &lt;pending&gt;     80:32511/TCP   1h
+</pre><p><strong>Here the port assigned is 32511, go to the browser and enter</strong></p><pre class="prettyprint linenums">masterip:32511
+</pre><p><img alt="alt text" src="https://schoolofdevops.github.io/ultimate-kubernetes-bootcamp/images/Result.png"></p><p>This is the page where you should see the results for the vote application stack.</p><p>Next <a href="https://schoolofdevops.github.io/ultimate-kubernetes-bootcamp/6-vote-kubernetes_deployment/" rel="noopener noreferrer" target="_blank" title="Defining Update Strategy"> </a>Previous</p><p><br></p></p>
+                </div>
+                </div>
+                </div>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+                </body>
+                </html>
